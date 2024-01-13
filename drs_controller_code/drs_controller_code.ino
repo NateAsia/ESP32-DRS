@@ -13,7 +13,11 @@
 
   #include "constants.h"
 
-  static const twai_filter_config_t   f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(); // TODO: FILTER
+  static const twai_filter_config_t   f_config =  {
+                                                    .acceptance_code  = (DRS_INPUT_ID << 21),
+                                                    .acceptance_mask  = ~(TWAI_STD_ID_MASK << 21),
+                                                    .single_filter    = true
+                                                  };
   static const twai_timing_config_t   t_config = TWAI_TIMING_CONFIG_1MBITS();     // CAN SPEED 
   static const twai_general_config_t  g_config = TWAI_GENERAL_CONFIG_DEFAULT((gpio_num_t)TX_GPIO_NUM, (gpio_num_t)RX_GPIO_NUM, TWAI_MODE_NO_ACK);
 
@@ -25,6 +29,12 @@
 
   // CAN
     twai_message_t message;         // CAN Message Struct
+
+    twai_message_t transmit_msg = {
+                                    .identifier = DRS_OUTPUT_ID, 
+                                    .data_length_code = 1,
+                                    .data = {0} 
+                                  };
 
     bool drs_final_control  = false;
 
@@ -74,29 +84,16 @@ bool check_auto_drs() {
 
 }
 
-static void twai_transmit_task(void *arg)
-{
+static void twai_transmit_task(void *arg){
     xSemaphoreTake(tx_sem, portMAX_DELAY);
     ESP_LOGI(BASE_TAG, "Transmit Thread Started");
 
     while(1){
       digitalWrite(LED_BUILTIN, HIGH);
 
-        // twai_message_t message1 = {
-        //                             .identifier = 0x7F9, 
-        //                             .data_length_code = 5,
-        //                             .data = {
-        //                               button_status, 
-        //                               pot_x_h, 
-        //                               pot_x_l, 
-        //                               pot_y_h, 
-        //                               pot_y_l
-        //                               } 
-        //                           };
+        transmit_msg.data[0] = drs_final_control;
 
-        // ONLINE BIT, DRS BIT
-
-        // ESP_ERROR_CHECK(twai_transmit(&message1 , portMAX_DELAY));  // Force the ESP to restart if there is a transmitted error
+        ESP_ERROR_CHECK(twai_transmit(&transmit_msg , pdMS_TO_TICKS(5)));  
 
       digitalWrite(LED_BUILTIN, LOW);
       vTaskDelay(pdMS_TO_TICKS(10));    // Send updates @ 100 Hz
@@ -115,7 +112,7 @@ static void twai_receive_task(void *arg){
 
     while(1){
 
-        if (twai_receive(&message, portMAX_DELAY) == ESP_OK); // NOTE: possibly decrease this delay later
+        if (twai_receive(&message, pdMS_TO_TICKS(5)) == ESP_OK);
         else {
             printf("\nFailed to receive message\n");
             vTaskDelay(1);
@@ -135,10 +132,10 @@ static void twai_receive_task(void *arg){
               }
           }
 
-        //Process received message
+        // Process received message
         if(message.identifier == DRS_INPUT_ID){
-          drs_mode        = message.data[0] & 00000011;
-          drs_btn_manual  = message.data[0] & 00000100;
+          drs_mode        = message.data[0] & DRS_MODE_MASK;
+          drs_btn_manual  = message.data[0] & DRS_BTN_MASK;
           lat_g           = (message.data[1] << 8) & message.data[2];
           lon_g           = (message.data[3] << 8) & message.data[4];
           brake_pressure  = message.data[5];

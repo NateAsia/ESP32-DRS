@@ -26,8 +26,8 @@
   #define TX_GPIO_NUM     8          // "TX2" on the ESP32-WROOM-32
   #define RX_GPIO_NUM     9          // "RX2" on the ESP32-WROOM-32
 
-  #define DRS_INPUT_ID    0x000          // From the C185 or steering wheel
-  #define DRS_OUTPUT_ID   0x000          // To ECU (or back to the C185 first)
+  #define DRS_INPUT_ID    0x653          // From the C185 or steering wheel
+  #define DRS_OUTPUT_ID   0x654          // To ECU (or back to the C185 first)
 
 
 /* --------------------- DRS-C IO ------------------ */
@@ -53,7 +53,11 @@
     #define SLOPE_LOW_MODE            1.0 // G per G
 
   // FLAT ZONE
-    #define MIN_LONG_G                0.1 // G          
+    #define MIN_LONG_G                0.1 // G 
+
+  // BIT MASKS
+    #define DRS_MODE_MASK 0b00000011       
+    #define DRS_BTN_MASK  0b00000100
 
 
 
