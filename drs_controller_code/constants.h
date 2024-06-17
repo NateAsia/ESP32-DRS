@@ -27,7 +27,7 @@
   #define RX_GPIO_NUM     9          // "RX2" on the ESP32-WROOM-32
 
   #define DRS_INPUT_ID    0x653          // From the C185 or steering wheel
-  #define DRS_OUTPUT_ID   0x654          // To ECU (or back to the C185 first)
+  #define DRS_OUTPUT_ID   0x654          // TO C185 first
 
 
 /* --------------------- DRS-C IO ------------------ */
@@ -42,9 +42,6 @@
     #define DRS_MODE_LO           1
     #define DRS_MODE_HI           2
     #define DRS_MODE_OPEN         3
-  
-  // Brakes
-    #define BRAKE_PRESSURE_LIMIT  50   // PSI
 
   // ACCEL HI
     #define SLOPE_HIGH_MODE           0.5 // G per G
